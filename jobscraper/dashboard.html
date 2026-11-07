@@ -1,0 +1,661 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Internship Radar</title>
+<style>
+  :root { --bg:#f5f5f2; --card:#fff; --fg:#18181b; --muted:#6b6b70; --faint:#9a9aa0; --line:#e4e4df; --accent:#2457d6;
+          --accent-fg:#fff; --accent-soft:#e8eefc; --ok:#0f7a55; --ok-soft:#e3f4ec; --bad:#b4400c; --warn:#a16207;
+          --faang:#6d3fd9; --quant:#0f7a55; --unicorn:#c2410c; --highpay:#0369a1; --other:#6b7280; --radius:10px; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --bg:#0f0f11; --card:#18181b; --fg:#ececee; --muted:#a0a0a8; --faint:#6e6e76;
+      --line:#2a2a2f; --accent:#7aa2ff; --accent-fg:#0b1530; --accent-soft:#1a2440; --ok:#4ccf99; --ok-soft:#12291f; }
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:14px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif; }
+  .page { max-width:1280px; margin:0 auto; padding:0 20px 48px; }
+  header { position:sticky; top:0; z-index:10; background:var(--bg); border-bottom:1px solid var(--line); }
+  .bar { max-width:1280px; margin:0 auto; padding:12px 20px; display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
+  h1 { font-size:17px; margin:0; letter-spacing:-.01em; } h1 span { color:var(--muted); font-weight:500; }
+  .spacer { flex:1; }
+  .status { display:inline-flex; align-items:center; gap:7px; font-size:12px; font-weight:600; padding:4px 10px 4px 8px;
+            border-radius:999px; background:var(--card); border:1px solid var(--line); }
+  .dot { width:8px; height:8px; border-radius:50%; background:var(--faint); }
+  .status.on .dot { background:var(--ok); } .status.busy .dot { background:var(--accent); animation:pulse 1s infinite; }
+  @keyframes pulse { 50% { opacity:.3; } }
+  button { font:inherit; font-size:13px; padding:7px 13px; border:1px solid var(--line); border-radius:8px; background:var(--card);
+           color:var(--fg); cursor:pointer; white-space:nowrap; }
+  button:hover { border-color:var(--faint); }
+  button.primary { background:var(--accent); color:var(--accent-fg); border-color:var(--accent); font-weight:600; }
+  button.stop { color:var(--bad); font-weight:600; }
+  button.small { font-size:12px; padding:3px 9px; border-radius:6px; }
+  button.on { background:var(--accent-soft); border-color:var(--accent); color:var(--accent); }
+  button:disabled { opacity:.5; cursor:default; }
+  nav { max-width:1280px; margin:0 auto; padding:0 20px; display:flex; gap:2px; }
+  nav button { border:none; border-bottom:2px solid transparent; border-radius:0; background:none; padding:9px 12px; color:var(--muted); font-weight:500; }
+  nav button.active { color:var(--fg); border-bottom-color:var(--accent); }
+  nav .count { font-size:11px; color:var(--faint); margin-left:4px; }
+
+  .cards { display:grid; grid-template-columns:repeat(6, 1fr); gap:10px; margin:16px 0 10px; }
+  .kpi { background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:10px 12px; }
+  .kpi .v { font-size:22px; font-weight:650; letter-spacing:-.02em; } .kpi .l { font-size:12px; color:var(--muted); }
+  .kpi.click { cursor:pointer; } .kpi.click:hover { border-color:var(--faint); }
+  .lanes { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px; }
+  .lane { flex:1; min-width:220px; font-size:12px; color:var(--muted); background:var(--card); border:1px solid var(--line);
+          border-radius:var(--radius); padding:8px 12px; }
+  .lane b { color:var(--fg); font-weight:600; }
+  .progress { height:4px; background:var(--line); border-radius:4px; margin-top:6px; overflow:hidden; }
+  .progress i { display:block; height:100%; background:var(--accent); transition:width .4s; }
+
+  section { display:none; } section.active { display:block; }
+  .toolbar { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-bottom:10px; }
+  .chips { display:flex; gap:4px; flex-wrap:wrap; }
+  .chip { font-size:12px; padding:5px 10px; border-radius:999px; }
+  select, input[type=search], input[type=number], input[type=text] { font:inherit; font-size:13px; padding:7px 9px;
+           border:1px solid var(--line); border-radius:8px; background:var(--card); color:var(--fg); }
+  input[type=search] { min-width:220px; flex:1; }
+  label.chk { display:inline-flex; align-items:center; gap:5px; color:var(--muted); font-size:13px; white-space:nowrap; }
+  .sub { font-size:12px; color:var(--muted); margin:0 0 8px; }
+
+  .list { background:var(--card); border:1px solid var(--line); border-radius:var(--radius); overflow:hidden; }
+  .group { padding:8px 14px; font-size:12px; font-weight:650; color:var(--muted); background:var(--bg); border-bottom:1px solid var(--line);
+           text-transform:uppercase; letter-spacing:.04em; display:flex; justify-content:space-between; }
+  .row { display:grid; grid-template-columns: 190px 1fr 150px 120px 215px; gap:14px; align-items:center; padding:10px 14px;
+         border-bottom:1px solid var(--line); }
+  .row:last-child { border-bottom:none; }
+  .row.applied, .row.hidden { opacity:.5; }
+  .row.fresh { box-shadow: inset 3px 0 0 var(--accent); }
+  .co { font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .tier { display:inline-block; font-size:10.5px; font-weight:650; padding:1px 7px; border-radius:10px; color:#fff; margin-top:3px; }
+  .faang{background:var(--faang)} .quant{background:var(--quant)} .unicorn{background:var(--unicorn)}
+  .highpay{background:var(--highpay)} .other{background:var(--other)}
+  .title a { color:var(--fg); font-weight:500; text-decoration:none; } .title a:hover { color:var(--accent); text-decoration:underline; }
+  .meta { font-size:12px; color:var(--muted); margin-top:2px; }
+  .meta .ahead { color:var(--ok); font-weight:600; }
+  .loc { font-size:13px; color:var(--muted); }
+  .pay { font-weight:650; text-align:right; white-space:nowrap; } .pay.est { font-weight:500; color:var(--muted); } .pay.none { font-weight:400; color:var(--faint); }
+  .acts { display:flex; gap:6px; justify-content:flex-end; }
+  .closed { color:var(--bad); font-size:11px; font-weight:600; }
+  .more { display:block; width:100%; padding:10px; border:none; border-top:1px solid var(--line); border-radius:0; color:var(--accent); }
+  .empty { padding:30px; text-align:center; color:var(--muted); }
+
+  table { width:100%; border-collapse:collapse; }
+  td, th { text-align:left; padding:8px 14px; border-bottom:1px solid var(--line); font-size:13px; }
+  th { font-size:12px; color:var(--muted); font-weight:600; }
+  .cov { font-size:12px; font-weight:600; padding:2px 8px; border-radius:999px; white-space:nowrap; }
+  .cov.direct { color:var(--ok); background:var(--ok-soft); } .cov.lists { color:var(--muted); background:var(--bg); }
+  .cov.failing { color:var(--bad); background:color-mix(in srgb, var(--bad) 12%, transparent); }
+
+  .grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(290px, 1fr)); gap:14px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:16px; }
+  .card h3 { margin:0 0 12px; font-size:14px; }
+  .field { display:flex; flex-direction:column; gap:5px; margin-bottom:12px; font-size:13px; }
+  .checks { display:flex; flex-wrap:wrap; gap:6px 14px; }
+  .note { font-size:12px; color:var(--muted); margin:4px 0 0; }
+  pre.log { background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:12px 14px; font-size:12px;
+            line-height:1.6; white-space:pre-wrap; max-height:65vh; overflow:auto; margin:0; }
+  .toast { position:fixed; bottom:18px; left:50%; transform:translateX(-50%); background:var(--fg); color:var(--bg); padding:9px 14px;
+           border-radius:8px; font-size:13px; opacity:0; transition:opacity .2s; pointer-events:none; z-index:20; }
+  .toast.show { opacity:.95; }
+  textarea { font:12px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; width:100%; padding:9px; border:1px solid var(--line);
+             border-radius:8px; background:var(--card); color:var(--fg); resize:vertical; }
+  textarea.prose { font:13px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif; }
+  .rgrid { display:grid; grid-template-columns:minmax(0, 1fr) minmax(0, 1.25fr); gap:14px; align-items:start; }
+  .rgrid > div { display:flex; flex-direction:column; gap:14px; min-width:0; }
+  .hist { max-height:260px; overflow:auto; }
+  .hist div { padding:7px 0; border-bottom:1px solid var(--line); cursor:pointer; font-size:13px; }
+  .hist div:hover b { color:var(--accent); } .hist div:last-child { border-bottom:none; }
+  .rhead { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:10px; }
+  .rhead h3 { margin:0; flex:1; min-width:200px; }
+  .pill { font-size:12px; font-weight:600; padding:2px 9px; border-radius:999px; background:var(--bg); color:var(--muted); }
+  .pill.ok { background:var(--ok-soft); color:var(--ok); } .pill.bad { color:var(--bad); background:color-mix(in srgb, var(--bad) 12%, transparent); }
+  .pill.busy::before { content:""; display:inline-block; width:7px; height:7px; border-radius:50%; background:var(--accent);
+                       margin-right:6px; animation:pulse 1s infinite; }
+  .rcols { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:14px; margin:6px 0 14px; }
+  .rcols h4 { margin:0 0 6px; font-size:12px; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); }
+  .rcols ul { margin:0; padding-left:17px; font-size:13px; } .rcols li { margin-bottom:5px; }
+  iframe.pdf { width:100%; height:78vh; border:1px solid var(--line); border-radius:8px; background:#fff; margin-bottom:12px; }
+  pre.tex { max-height:55vh; overflow:auto; font-size:12px; line-height:1.5; background:var(--bg); border:1px solid var(--line);
+            border-radius:8px; padding:12px; margin:10px 0 0; white-space:pre-wrap; word-break:break-word; }
+  .warn { font-size:13px; color:var(--warn); background:color-mix(in srgb, var(--warn) 10%, transparent); padding:8px 11px; border-radius:8px; margin:0 0 12px; }
+  @media (max-width:1000px) { .rgrid, .rcols { grid-template-columns:1fr; } }
+  @media (max-width:1000px) { .cards { grid-template-columns:repeat(3, 1fr); } .row { grid-template-columns: 150px 1fr 110px; }
+    .row .loc, .row .acts { display:none; } }
+  @media (max-width:600px) { .page, .bar, nav { padding-left:16px; padding-right:16px; } .cards { grid-template-columns:repeat(2, 1fr); }
+    .row { grid-template-columns: 1fr auto; } .row .co-cell { grid-column:1 / -1; } }
+</style>
+</head>
+<body>
+<header>
+  <div class="bar">
+    <h1>Internship Radar <span>· Summer 2027</span></h1>
+    <span class="status" id="status"><span class="dot"></span><span id="statustext">Loading…</span></span>
+    <span class="spacer"></span>
+    <button id="checknow" title="Check priority companies and the lists right now">Check now</button>
+    <button id="toggle" class="primary">Start searching</button>
+  </div>
+  <nav>
+    <button data-tab="jobs" class="active">Jobs<span class="count" id="tabcount"></span></button>
+    <button data-tab="business">Business<span class="count" id="bizcount"></span></button>
+    <button data-tab="companies">Companies</button>
+    <button data-tab="resume">Resume</button>
+    <button data-tab="settings">Settings</button>
+    <button data-tab="activity">Activity</button>
+  </nav>
+</header>
+
+<div class="page">
+  <div class="cards">
+    <div class="kpi click" data-since="86400"><div class="v" id="k_today">–</div><div class="l">posted in last 24h</div></div>
+    <div class="kpi click" data-since="604800"><div class="v" id="k_week">–</div><div class="l">posted this week</div></div>
+    <div class="kpi click" data-since="0"><div class="v" id="k_open">–</div><div class="l">open matches</div></div>
+    <div class="kpi click" data-paylisted="1"><div class="v" id="k_pay">–</div><div class="l">with pay listed</div></div>
+    <div class="kpi"><div class="v" id="k_lead">–</div><div class="l" id="k_lead_l">ahead of Simplify</div></div>
+    <div class="kpi click" data-applied="1"><div class="v" id="k_applied">–</div><div class="l">applied</div></div>
+  </div>
+  <div class="lanes" id="lanes"></div>
+
+  <!-- ============================================================ JOBS -->
+  <section id="jobs" class="active">
+    <div class="toolbar">
+      <input type="search" id="q" placeholder="Search company or role…">
+      <div class="chips" id="tierchips">
+        <button class="chip on" data-tier="">All</button><button class="chip" data-tier="faang">FAANG+</button>
+        <button class="chip" data-tier="quant">Quant</button><button class="chip" data-tier="unicorn">Unicorn</button>
+        <button class="chip" data-tier="highpay">High-pay</button><button class="chip" data-tier="other">Other $40+</button>
+      </div>
+    </div>
+    <div class="toolbar">
+      <select id="sort"><option value="posted">Newest posted</option><option value="pay">Highest pay</option>
+        <option value="seen">Newest found by radar</option><option value="company">Company A–Z</option></select>
+      <select id="role"><option value="">All roles</option><option value="swe">Software</option><option value="ml">ML / AI</option>
+        <option value="data">Data</option><option value="quant">Quant</option></select>
+      <select id="city"><option value="">All cities</option><option value="nyc">New York</option><option value="sf">SF Bay Area</option>
+        <option value="chicago">Chicago</option><option value="austin">Austin</option><option value="seattle">Seattle</option>
+        <option value="boston">Boston</option><option value="remote">Remote</option></select>
+      <select id="since"><option value="0">Posted any time</option><option value="86400">Last 24 hours</option>
+        <option value="259200">Last 3 days</option><option value="604800">Last 7 days</option><option value="2592000">Last 30 days</option></select>
+      <select id="minpay"><option value="0">Any pay</option><option value="40">$40+/hr</option><option value="50">$50+/hr</option>
+        <option value="60">$60+/hr</option><option value="80">$80+/hr</option><option value="100">$100+/hr</option></select>
+      <label class="chk"><input type="checkbox" id="paylisted"> pay listed</label>
+      <label class="chk"><input type="checkbox" id="showapplied"> applied</label>
+      <label class="chk"><input type="checkbox" id="showhidden"> hidden</label>
+      <label class="chk"><input type="checkbox" id="showclosed"> closed</label>
+      <span class="spacer"></span>
+      <button class="small" id="reset">Reset filters</button>
+    </div>
+    <p class="sub" id="count"></p>
+    <div class="list" id="joblist"></div>
+  </section>
+
+  <!-- ============================================================ BUSINESS -->
+  <section id="business">
+    <div class="toolbar">
+      <input type="search" id="bq" placeholder="Search company or role…">
+      <select id="brole"><option value="">All business roles</option><option value="finance">Finance</option>
+        <option value="accounting">Accounting / audit / tax</option><option value="marketing">Marketing / comms</option>
+        <option value="hr">HR / people</option><option value="business">Operations / sales / strategy</option></select>
+      <select id="bcity"><option value="">NYC, NJ &amp; Boston</option><option value="nyc">New York</option>
+        <option value="nj">New Jersey</option><option value="boston">Boston area</option></select>
+      <select id="bease"><option value="easy">Easier to land</option><option value="all">All companies</option></select>
+      <label class="chk"><input type="checkbox" id="bremote"> US-remote</label>
+      <label class="chk"><input type="checkbox" id="bapplied"> applied</label>
+      <label class="chk"><input type="checkbox" id="bhidden"> hidden</label>
+    </div>
+    <p class="sub" id="bsub">Summer 2027 HR, marketing, accounting, finance and operations internships from every company board the radar watches. "Easier to land" leaves out FAANG+/quant firms and front-office roles (investment banking, trading, private equity).</p>
+    <div class="list" id="bizlist"><div class="empty">Loading…</div></div>
+  </section>
+
+  <!-- ============================================================ COMPANIES -->
+  <section id="companies">
+    <div class="toolbar">
+      <input type="search" id="cq" placeholder="Search companies…">
+      <select id="ccov"><option value="">Any coverage</option><option value="direct">Polled directly</option>
+        <option value="lists">Lists only</option><option value="failing">Board failing</option></select>
+      <span class="spacer"></span>
+      <button id="discover" title="Re-learn every company's job board from Simplify's history (~1 min)">Refresh board list</button>
+    </div>
+    <p class="sub" id="ccount"></p>
+    <div id="clist"></div>
+  </section>
+
+  <!-- ============================================================ RESUME -->
+  <section id="resume">
+    <p class="warn" id="nokey" hidden>Tailoring needs an Anthropic API key. Create a file named <code>.env</code> in the jobscraper
+      folder containing <code>ANTHROPIC_API_KEY=…</code>, then restart the app.</p>
+    <div class="rgrid">
+      <div>
+        <div class="card"><h3>Your base resume (LaTeX)</h3>
+          <p class="note" id="basestatus" style="margin:0 0 10px"></p>
+          <div class="toolbar"><input type="file" id="texfile" accept=".tex,text/plain"><span class="spacer"></span>
+            <button class="primary" id="savetex">Save resume</button></div>
+          <textarea id="basetex" rows="12" spellcheck="false" placeholder="Paste your resume's .tex source, or choose the file above"></textarea>
+          <p class="note">If it uses a custom class (e.g. <code>resume.cls</code>), put that file in <code>data/resume/</code>.</p>
+        </div>
+        <div class="card"><h3>Tailor for any posting</h3>
+          <p class="note" style="margin:0 0 10px">For jobs in the list, use the <b>Tailor</b> button on the row instead; it reads the posting for you.</p>
+          <div class="toolbar"><input type="text" id="t_company" placeholder="Company" style="flex:1">
+            <input type="text" id="t_title" placeholder="Role title" style="flex:2"></div>
+          <textarea id="t_desc" class="prose" rows="7" placeholder="Paste the job description (or just a posting URL below)"></textarea>
+          <div class="toolbar" style="margin-top:8px"><input type="text" id="t_url" placeholder="Posting URL (optional)" style="flex:1">
+            <button class="primary" id="tailorpaste">Tailor</button></div>
+        </div>
+        <div class="card"><h3>Notes for every tailoring</h3>
+          <textarea id="t_notes" class="prose" rows="3" placeholder="Optional. Facts the resume leaves out, or preferences, e.g. &quot;also comfortable with Go&quot;, &quot;keep the research section&quot;"></textarea>
+          <p class="note">Only true things: anything the posting wants that neither the resume nor these notes show is listed as a gap, not added.</p>
+        </div>
+        <div class="card"><h3>Past tailorings</h3><div class="hist" id="hist"><span class="note">None yet.</span></div></div>
+      </div>
+      <div>
+        <div class="card" id="tresult"><div class="empty">Click <b>Tailor</b> on a job, or paste a posting, and your tailored resume PDF shows up here.</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ SETTINGS -->
+  <section id="settings">
+    <div class="grid">
+      <div class="card"><h3>What to look for</h3>
+        <div class="field">Roles<div class="checks" id="s_roles"></div></div>
+        <div class="field">Cities<div class="checks" id="s_cities"></div></div>
+        <label class="chk"><input type="checkbox" id="s_include_remote"> include US-remote</label><br>
+        <label class="chk"><input type="checkbox" id="s_keep_unknown_location"> keep postings with no clear location</label>
+      </div>
+      <div class="card"><h3>Pay</h3>
+        <label class="field">Minimum $/hr<input type="number" id="s_min_hourly" min="0" step="1"></label>
+        <label class="field">Companies outside the priority list
+          <select id="s_other_companies"><option value="if_pay_known">show if posted or estimated pay ≥ minimum</option>
+            <option value="all">always show</option><option value="none">never show</option></select></label>
+        <p class="note">Posted ranges are judged by their midpoint. When a posting lists no pay, the company's typical intern pay is used (marked "est.").</p>
+      </div>
+      <div class="card"><h3>How often to check</h3>
+        <label class="field">Priority companies (minutes)<input type="number" id="s_fast_minutes" min="1" step="1"></label>
+        <label class="field">All other companies (minutes)<input type="number" id="s_slow_minutes" min="5" step="1"></label>
+        <label class="field">Simplify / GitHub lists (minutes)<input type="number" id="s_lists_minutes" min="2" step="1"></label>
+        <button id="fullcheck">Full check of every board now</button>
+      </div>
+      <div class="card"><h3>Alerts</h3>
+        <label class="chk"><input type="checkbox" id="s_macos"> macOS notification for each new match</label>
+        <div style="height:12px"></div>
+        <label class="field">Phone push via ntfy.sh topic (blank = off)<input type="text" id="s_ntfy_topic" placeholder="long-random-topic-name"></label>
+        <label class="chk"><input type="checkbox" id="browsernotif"> browser notification while this page is open</label>
+      </div>
+    </div>
+    <p style="margin-top:16px"><button class="primary" id="save">Save settings</button>
+      <span class="note">&nbsp;Saving re-applies the filters to everything already found.</span></p>
+  </section>
+
+  <!-- ============================================================ ACTIVITY -->
+  <section id="activity">
+    <div class="toolbar"><button id="rescore">Re-apply filters</button><span class="spacer"></span>
+      <label class="chk"><input type="checkbox" id="lognew"> only new matches</label></div>
+    <pre class="log" id="log"></pre>
+  </section>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const now = () => Date.now() / 1000;
+const ago = (t) => { if (!t) return "never"; const s = Math.max(0, now() - t);
+  return s < 60 ? "just now" : s < 3600 ? Math.round(s / 60) + "m ago" : s < 86400 ? Math.round(s / 3600) + "h ago" : Math.round(s / 86400) + "d ago"; };
+const dur = (s) => s < 3600 ? Math.max(1, Math.round(s / 60)) + "m" : s < 86400 ? (s / 3600).toFixed(1) + "h" : (s / 86400).toFixed(1) + "d";
+const toast = (m) => { const t = $("toast"); t.textContent = m; t.classList.add("show"); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove("show"), 2400); };
+const debounce = (fn, ms) => { let h; return (...a) => { clearTimeout(h); h = setTimeout(() => fn(...a), ms); }; };
+async function api(path, body) {
+  const r = await fetch(path, body === undefined ? {} : {method: "POST", body: JSON.stringify(body)});
+  const d = await r.json().catch(() => ({})); if (!r.ok) throw new Error(d.error || r.status); return d;
+}
+const LABEL = {faang: "FAANG+", quant: "Quant", unicorn: "Unicorn", highpay: "High-pay", other: "$40+"};
+const CITY = {nyc: "New York", sf: "SF Bay Area", chicago: "Chicago", austin: "Austin", seattle: "Seattle", boston: "Boston"};
+const LANE = {fast: "Priority companies", slow: "All other companies", lists: "Simplify & GitHub lists",
+              "once-all": "Manual check", "task-discover": "Refreshing board list", "task-rescore": "Re-applying filters"};
+
+// ------------------------------------------------------------------ tabs
+document.querySelector("nav").addEventListener("click", (e) => {
+  const b = e.target.closest("button[data-tab]"); if (!b) return;
+  document.querySelectorAll("nav button").forEach((x) => x.classList.toggle("active", x === b));
+  document.querySelectorAll("section").forEach((s) => s.classList.toggle("active", s.id === b.dataset.tab));
+  if (b.dataset.tab === "companies") loadCompanies();
+  if (b.dataset.tab === "business") loadBiz();
+  if (b.dataset.tab === "resume") loadResume();
+});
+
+// ------------------------------------------------------------------ status, KPIs, lanes
+let state = null, settingsFilled = false;
+async function loadState() {
+  try { state = await api("/api/state"); } catch (e) { $("statustext").textContent = "App not reachable"; return; }
+  const s = state.stats, busy = state.busy.length;
+  $("status").className = "status" + (busy ? " busy" : state.running ? " on" : "");
+  $("statustext").textContent = busy ? (LANE[state.busy[0].lane] || state.busy[0].lane) + "…" : state.running ? "Searching" : "Stopped";
+  $("toggle").textContent = state.running ? "Stop searching" : "Start searching";
+  $("toggle").className = state.running ? "stop" : "primary";
+  $("k_today").textContent = s.new_today; $("k_week").textContent = s.new_week; $("k_open").textContent = s.matched_open;
+  $("k_pay").textContent = s.with_pay; $("k_applied").textContent = s.applied;
+  $("k_lead").textContent = s.beat_lists ? s.beat_lists + "×" : "–";
+  $("k_lead_l").textContent = s.beat_lists ? `ahead of Simplify (median ${s.median_lead_hours}h)` : "ahead of Simplify (none yet)";
+  $("lanes").innerHTML = state.lanes.map((l) => {
+    const p = l.progress, pct = p ? Math.round(100 * p[0] / p[1]) : null;
+    const what = !l.alive ? (l.lane in {fast: 1, slow: 1, lists: 1} ? "stopped" : l.state)
+      : p ? `checking ${p[0]}/${p[1]} boards` : l.state === "idle" ? "waiting for next check" : l.state;
+    const last = l.last_done ? `last ${ago(l.last_done)}${l.last_duration ? ` (${Math.round(l.last_duration)}s)` : ""}${l.last_result ? " · " + esc(l.last_result) : ""}` : "not run yet";
+    return `<div class="lane"><b>${LANE[l.lane] || esc(l.lane)}</b> — ${esc(what)}<br>${last}${pct !== null ? `<div class="progress"><i style="width:${pct}%"></i></div>` : ""}</div>`;
+  }).join("") || `<div class="lane">Searching hasn't run yet. Press <b>Start searching</b>.</div>`;
+  const logLines = state.log.slice().reverse().filter((l) => !$("lognew").checked || l.includes(" NEW "));
+  $("log").textContent = logLines.join("\n") || "No activity yet.";
+  if (!settingsFilled) { fillSettings(state.settings); settingsFilled = true; }
+}
+$("toggle").onclick = async () => {
+  $("toggle").disabled = true;
+  try { await api(state.running ? "/api/stop" : "/api/start", {}); toast(state.running ? "Searching stopped" : "Searching started"); }
+  catch (e) { toast("Failed: " + e.message); }
+  $("toggle").disabled = false; setTimeout(loadState, 600);
+};
+$("checknow").onclick = async () => { await api("/api/poll", {}); toast("Checking now"); setTimeout(loadState, 600); };
+$("fullcheck").onclick = async () => { await api("/api/poll", {force: true}); toast("Full check started (~5 min)"); setTimeout(loadState, 600); };
+$("discover").onclick = async () => { await api("/api/discover", {}); toast("Refreshing board list (~1 min)"); setTimeout(loadState, 600); };
+$("rescore").onclick = async () => { await api("/api/rescore", {}); toast("Re-applying filters"); setTimeout(loadState, 600); };
+$("lognew").onchange = loadState;
+document.querySelector(".cards").addEventListener("click", (e) => {
+  const k = e.target.closest(".kpi.click"); if (!k) return;
+  resetFilters(false);
+  if (k.dataset.since) $("since").value = k.dataset.since;
+  if (k.dataset.paylisted) $("paylisted").checked = true;
+  if (k.dataset.applied) { $("showapplied").checked = true; onlyApplied = true; }
+  document.querySelector('nav button[data-tab="jobs"]').click(); renderJobs();
+});
+
+// ------------------------------------------------------------------ jobs
+let jobs = [], knownKeys = null, tierFilter = "", limit = 100, onlyApplied = false;
+async function loadJobs() {
+  try { jobs = (await api("/api/jobs")).jobs; } catch (e) { return; }
+  const keys = new Set(jobs.map((j) => j.key));
+  if (knownKeys && $("browsernotif").checked && "Notification" in window && Notification.permission === "granted") {
+    const fresh = jobs.filter((j) => !knownKeys.has(j.key) && j.status === "new");
+    if (fresh.length) new Notification(`${fresh.length} new internship${fresh.length > 1 ? "s" : ""}`,
+      {body: fresh.slice(0, 4).map((j) => `${j.company}: ${j.title}`).join("\n")});
+  }
+  knownKeys = keys; renderJobs();
+}
+const payMid = (j) => j.pay_lo ? (j.pay_lo + (j.pay_hi || j.pay_lo)) / 2 : 0;
+const payAny = (j) => payMid(j) || j.pay_est || 0;
+function payHTML(j) {
+  if (j.pay_lo) return `<div class="pay">$${Math.round(j.pay_lo)}${j.pay_hi - j.pay_lo >= 1 ? "–" + Math.round(j.pay_hi) : ""}/hr</div>`;
+  if (j.pay_est) return `<div class="pay est" title="Typical intern pay at this company; the posting doesn't list pay">~$${Math.round(j.pay_est)}/hr est.</div>`;
+  return `<div class="pay none">pay not listed</div>`;
+}
+function dayGroup(t) {
+  if (!t) return "Undated";
+  const d = new Date(t * 1000), today = new Date(); today.setHours(0, 0, 0, 0);
+  const days = Math.floor((today - new Date(d.getFullYear(), d.getMonth(), d.getDate())) / 864e5);
+  return days <= 0 ? "Today" : days === 1 ? "Yesterday" : days < 7 ? "Earlier this week" : days < 30 ? "Earlier this month" : "Older";
+}
+function filtered() {
+  const q = $("q").value.trim().toLowerCase(), role = $("role").value, city = $("city").value;
+  const since = +$("since").value, minpay = +$("minpay").value;
+  return jobs.filter((j) =>
+    (!q || (j.company + " " + j.title).toLowerCase().includes(q)) && (!tierFilter || j.tier === tierFilter) &&
+    (!role || (j.roles || "").split(",").includes(role)) &&
+    (!city || (city === "remote" ? j.remote : (j.cities || "").split(",").includes(city))) &&
+    (!since || (j.posted_at && now() - j.posted_at <= since)) && (!minpay || payAny(j) >= minpay) &&
+    (!$("paylisted").checked || j.pay_lo) && ($("showclosed").checked || !j.closed_at) &&
+    (onlyApplied ? j.status === "applied" : (j.status === "new" || (j.status === "applied" && $("showapplied").checked) ||
+      (j.status === "hidden" && $("showhidden").checked))));
+}
+function rowHTML(j) {
+  const loc = j.cities ? j.cities.split(",").map((c) => CITY[c] || c).join(", ") : j.remote ? "Remote" : esc((j.locations || []).join("; ").slice(0, 50)) || "Location unclear";
+  const posted = j.posted_at ? `posted ${ago(j.posted_at)}` : "post date unknown";
+  const radar = j.source === "board"
+    ? (j.list_seen_at && j.list_seen_at > j.first_seen ? `<span class="ahead">found ${dur(j.list_seen_at - j.first_seen)} before Simplify</span>`
+       : !j.list_seen_at ? `<span class="ahead">not on Simplify yet</span>` : "")
+    : `via ${esc(j.list_source)}`;
+  const fresh = j.posted_at && now() - j.posted_at < 86400 && j.status === "new";
+  return `<div class="row ${fresh ? "fresh" : ""} ${j.status}">
+    <div class="co-cell"><div class="co" title="${esc(j.company)}">${esc(j.company)}</div><span class="tier ${j.tier}">${LABEL[j.tier] || j.tier}</span></div>
+    <div><div class="title"><a href="${esc(j.url)}" target="_blank" rel="noopener">${esc(j.title)}</a></div>
+      <div class="meta">${posted}${radar ? " · " + radar : ""}${j.closed_at ? ' · <span class="closed">closed</span>' : ""}</div></div>
+    <div class="loc">${loc}</div>
+    ${payHTML(j)}
+    <div class="acts"><button class="small" data-tailor="${esc(j.key)}" title="Tailor your resume to this posting">Tailor</button><button class="small ${j.status === "applied" ? "on" : ""}" data-k="${esc(j.key)}" data-s="applied">${j.status === "applied" ? "Applied ✓" : "Applied"}</button>
+      <button class="small ${j.status === "hidden" ? "on" : ""}" data-k="${esc(j.key)}" data-s="hidden">${j.status === "hidden" ? "Unhide" : "Hide"}</button></div></div>`;
+}
+function renderJobs() {
+  const key = $("sort").value, rows = filtered();
+  const P = (j) => j.posted_at || 0;
+  rows.sort(key === "posted" ? (a, b) => P(b) - P(a) || b.first_seen - a.first_seen
+    : key === "seen" ? (a, b) => b.first_seen - a.first_seen
+    : key === "pay" ? (a, b) => payAny(b) - payAny(a) || P(b) - P(a)
+    : (a, b) => a.company.localeCompare(b.company) || P(b) - P(a));
+  $("tabcount").textContent = rows.length;
+  $("count").textContent = rows.length ? `${rows.length} internship${rows.length === 1 ? "" : "s"}${rows.length > limit ? ` · showing ${limit}` : ""}` : "";
+  if (!rows.length) { $("joblist").innerHTML = `<div class="empty">No internships match these filters.</div>`; return; }
+  let html = "", lastGroup = null;
+  const shown = rows.slice(0, limit), counts = {};
+  if (key === "posted") for (const j of rows) counts[dayGroup(j.posted_at)] = (counts[dayGroup(j.posted_at)] || 0) + 1;
+  for (const j of shown) {
+    if (key === "posted") {
+      const g = dayGroup(j.posted_at);
+      if (g !== lastGroup) { html += `<div class="group"><span>${g}</span><span>${counts[g]}</span></div>`; lastGroup = g; }
+    }
+    html += rowHTML(j);
+  }
+  if (rows.length > limit) html += `<button class="more" id="showmore">Show ${Math.min(100, rows.length - limit)} more</button>`;
+  $("joblist").innerHTML = html;
+}
+$("joblist").addEventListener("click", async (e) => {
+  if (e.target.id === "showmore") { limit += 100; renderJobs(); return; }
+  const tb = e.target.closest("button[data-tailor]");
+  if (tb) { startTailor({key: tb.dataset.tailor}); return; }
+  const b = e.target.closest("button[data-k]"); if (!b) return;
+  const j = jobs.find((x) => x.key === b.dataset.k), status = j.status === b.dataset.s ? "new" : b.dataset.s;
+  j.status = status; renderJobs();
+  try { await api("/api/status", {key: j.key, status}); } catch (err) { toast("Couldn't save: " + err.message); }
+});
+$("tierchips").addEventListener("click", (e) => {
+  const b = e.target.closest("button[data-tier]"); if (!b) return;
+  tierFilter = b.dataset.tier; document.querySelectorAll("#tierchips button").forEach((x) => x.classList.toggle("on", x === b));
+  limit = 100; renderJobs();
+});
+const rerender = () => { limit = 100; onlyApplied = false; renderJobs(); };
+$("q").addEventListener("input", debounce(rerender, 150));
+for (const id of ["sort", "role", "city", "since", "minpay", "paylisted", "showapplied", "showhidden", "showclosed"]) $(id).addEventListener("input", rerender);
+function resetFilters(render = true) {
+  $("q").value = ""; for (const id of ["role", "city"]) $(id).value = ""; $("since").value = "0"; $("minpay").value = "0"; $("sort").value = "posted";
+  for (const id of ["paylisted", "showapplied", "showhidden", "showclosed"]) $(id).checked = false;
+  tierFilter = ""; onlyApplied = false; limit = 100;
+  document.querySelectorAll("#tierchips button").forEach((x) => x.classList.toggle("on", x.dataset.tier === ""));
+  if (render) renderJobs();
+}
+$("reset").onclick = () => resetFilters();
+
+// ------------------------------------------------------------------ business
+const BIZROLE = {finance: "Finance", accounting: "Accounting", marketing: "Marketing", hr: "HR", business: "Operations"};
+const BIZCITY = {nyc: "New York", nj: "New Jersey", boston: "Boston area"};
+let biz = [], bizLimit = 100;
+async function loadBiz() { try { biz = (await api("/api/biz")).jobs; } catch (e) { return; } renderBiz(); }
+function bizFiltered() {
+  const q = $("bq").value.trim().toLowerCase(), role = $("brole").value, city = $("bcity").value;
+  return biz.filter((j) =>
+    (!q || (j.company + " " + j.title).toLowerCase().includes(q)) && (!role || j.roles.split(",").includes(role)) &&
+    (city ? j.cities.split(",").includes(city) : (j.cities || $("bremote").checked)) &&
+    ($("bease").value === "all" || !j.competitive) &&
+    (j.status === "new" || (j.status === "applied" && $("bapplied").checked) || (j.status === "hidden" && $("bhidden").checked)));
+}
+function bizRowHTML(j) {
+  const loc = j.cities ? j.cities.split(",").map((c) => BIZCITY[c] || c).join(", ") : "Remote";
+  const tag = j.competitive ? `<span class="tier ${j.tier === "other" ? "highpay" : j.tier}">competitive</span>`
+    : `<span class="tier other">${j.roles.split(",").map((r) => BIZROLE[r]).join(" · ")}</span>`;
+  const posted = j.posted_at ? `posted ${ago(j.posted_at)}` : `found ${ago(j.first_seen)}`;
+  return `<div class="row ${j.status}">
+    <div class="co-cell"><div class="co" title="${esc(j.company)}">${esc(j.company)}</div>${tag}</div>
+    <div><div class="title"><a href="${esc(j.url)}" target="_blank" rel="noopener">${esc(j.title)}</a></div>
+      <div class="meta">${posted}${j.source === "list" ? " · via " + esc(j.list_source) : ""}</div></div>
+    <div class="loc">${loc}</div>
+    ${payHTML(j)}
+    <div class="acts"><button class="small" data-tailor="${esc(j.key)}" title="Tailor your resume to this posting">Tailor</button><button class="small ${j.status === "applied" ? "on" : ""}" data-k="${esc(j.key)}" data-s="applied">${j.status === "applied" ? "Applied ✓" : "Applied"}</button>
+      <button class="small ${j.status === "hidden" ? "on" : ""}" data-k="${esc(j.key)}" data-s="hidden">${j.status === "hidden" ? "Unhide" : "Hide"}</button></div></div>`;
+}
+function renderBiz() {
+  const rows = bizFiltered();
+  $("bizcount").textContent = rows.length;
+  if (!rows.length) { $("bizlist").innerHTML = `<div class="empty">No business internships match these filters.</div>`; return; }
+  let html = "", lastGroup = null; const counts = {};
+  for (const j of rows) counts[dayGroup(j.posted_at)] = (counts[dayGroup(j.posted_at)] || 0) + 1;
+  for (const j of rows.slice(0, bizLimit)) {
+    const g = dayGroup(j.posted_at);
+    if (g !== lastGroup) { html += `<div class="group"><span>${g}</span><span>${counts[g]}</span></div>`; lastGroup = g; }
+    html += bizRowHTML(j);
+  }
+  if (rows.length > bizLimit) html += `<button class="more" id="bizmore">Show ${Math.min(100, rows.length - bizLimit)} more</button>`;
+  $("bizlist").innerHTML = html;
+}
+$("bizlist").addEventListener("click", async (e) => {
+  if (e.target.id === "bizmore") { bizLimit += 100; renderBiz(); return; }
+  const tb = e.target.closest("button[data-tailor]");
+  if (tb) { startTailor({key: tb.dataset.tailor}); return; }
+  const b = e.target.closest("button[data-k]"); if (!b) return;
+  const j = biz.find((x) => x.key === b.dataset.k), status = j.status === b.dataset.s ? "new" : b.dataset.s;
+  j.status = status; renderBiz();
+  try { await api("/api/status", {key: j.key, status}); } catch (err) { toast("Couldn't save: " + err.message); }
+});
+$("bq").addEventListener("input", debounce(() => { bizLimit = 100; renderBiz(); }, 150));
+for (const id of ["brole", "bcity", "bease", "bremote", "bapplied", "bhidden"]) $(id).addEventListener("input", () => { bizLimit = 100; renderBiz(); });
+
+// ------------------------------------------------------------------ companies
+let comps = [];
+async function loadCompanies() { try { comps = (await api("/api/companies")).companies; renderCompanies(); } catch (e) {} }
+function coverage(c) {
+  if (!c.boards.length) return "lists";
+  if (c.boards.some((b) => b.last_ok && !b.fails)) return "direct";
+  return c.boards.some((b) => b.fails) ? "failing" : "direct";
+}
+function renderCompanies() {
+  const q = $("cq").value.trim().toLowerCase(), cov = $("ccov").value;
+  const rows = comps.filter((c) => (!q || c.company.toLowerCase().includes(q)) && (!cov || coverage(c) === cov));
+  const direct = comps.filter((c) => coverage(c) === "direct").length;
+  $("ccount").textContent = `${comps.length} priority companies · ${direct} polled directly · ${comps.filter((c) => coverage(c) === "lists").length} via Simplify / GitHub lists only`;
+  const COV = {direct: "Polled directly", lists: "Lists only", failing: "Board failing"};
+  let html = "";
+  for (const tier of ["faang", "quant", "unicorn", "highpay"]) {
+    const g = rows.filter((c) => c.tier === tier).sort((a, b) => (b.open_matches || 0) - (a.open_matches || 0) || a.company.localeCompare(b.company));
+    if (!g.length) continue;
+    html += `<div class="list" style="margin-bottom:14px"><div class="group"><span>${LABEL[tier]}</span><span>${g.length}</span></div><table>
+      <tr><th>Company</th><th>Coverage</th><th>Job boards</th><th style="text-align:right">Open matches</th></tr>` +
+      g.map((c) => { const cv = coverage(c);
+        const boards = c.boards.map((b) => `${esc(b.ats)}${b.n_jobs != null ? ` · ${b.n_jobs} jobs` : ""}`).join(", ");
+        const tip = cv === "lists" ? "Careers site blocks automated access or has no public feed; covered through Simplify/GitHub lists"
+          : cv === "failing" ? esc(c.boards[0].last_error || "") : "";
+        return `<tr><td><b>${esc(c.company)}</b></td><td><span class="cov ${cv}" title="${tip}">${COV[cv]}</span></td>
+          <td class="meta">${boards || "—"}</td><td style="text-align:right">${c.open_matches || ""}</td></tr>`; }).join("") + `</table></div>`;
+  }
+  $("clist").innerHTML = html || `<div class="empty">No companies match.</div>`;
+}
+$("cq").addEventListener("input", debounce(renderCompanies, 150)); $("ccov").addEventListener("input", renderCompanies);
+
+// ------------------------------------------------------------------ resume tailoring
+let resume = null, current = null, pollH = null;
+async function loadResume() {
+  try { resume = await api("/api/resume"); } catch (e) { return; }
+  $("nokey").hidden = resume.has_key;
+  if (!$("basetex").dataset.dirty) $("basetex").value = resume.tex;
+  $("basestatus").textContent = resume.tex ? `Saved · ${resume.tex.split("\n").length} lines` : "Not uploaded yet.";
+  $("hist").innerHTML = resume.history.length ? resume.history.map((h) =>
+    `<div data-id="${esc(h.id)}"><b>${esc(h.company)}</b> — ${esc(h.title)}<br><span class="meta">${ago(h.created)} · ${
+      h.state === "done" ? (h.compiled ? `compiles${h.pages ? `, ${h.pages} page${h.pages > 1 ? "s" : ""}` : ""}` : "doesn't compile") : esc(h.state)}</span></div>`).join("")
+    : `<span class="note">None yet.</span>`;
+}
+$("basetex").addEventListener("input", () => { $("basetex").dataset.dirty = "1"; });
+$("texfile").onchange = async () => { const f = $("texfile").files[0]; if (!f) return;
+  $("basetex").value = await f.text(); $("basetex").dataset.dirty = "1"; toast("Loaded " + f.name + ". Press Save resume."); };
+$("savetex").onclick = async () => {
+  try { await api("/api/resume", {tex: $("basetex").value}); delete $("basetex").dataset.dirty; toast("Resume saved"); loadResume(); }
+  catch (e) { toast("Couldn't save: " + e.message); }
+};
+try { $("t_notes").value = localStorage.getItem("radar-notes") || ""; } catch (e) {}
+$("t_notes").addEventListener("input", () => { try { localStorage.setItem("radar-notes", $("t_notes").value); } catch (e) {} });
+$("tailorpaste").onclick = () => {
+  const description = $("t_desc").value.trim(), url = $("t_url").value.trim();
+  if (!description && !url) { toast("Paste the job description or a posting URL"); return; }
+  startTailor({company: $("t_company").value.trim(), title: $("t_title").value.trim(), description, url});
+};
+async function startTailor(body) {
+  document.querySelector('nav button[data-tab="resume"]').click();
+  try { const r = await api("/api/tailor", {...body, notes: $("t_notes").value}); showTailor(r.id); toast("Tailoring started (~1 min)"); }
+  catch (e) { toast(e.message); $("tresult").innerHTML = `<p class="warn">${esc(e.message)}</p>`; }
+}
+async function showTailor(id) {
+  clearTimeout(pollH);
+  let m; try { m = await api("/api/tailor/" + id); } catch (e) { return; }
+  current = m;
+  const busy = m.state !== "done" && m.state !== "error";
+  const list = (xs) => xs && xs.length ? `<ul>${xs.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>` : `<p class="note">—</p>`;
+  const pill = busy ? `<span class="pill busy">${esc(m.state)}…</span>` : m.state === "error" ? `<span class="pill bad">failed</span>`
+    : m.compiled ? `<span class="pill ok">compiles${m.pages ? ` · ${m.pages} page${m.pages > 1 ? "s" : ""}` : ""}</span>` : `<span class="pill bad">doesn't compile</span>`;
+  let h = `<div class="rhead"><h3>${esc(m.company || "Job")} — ${esc(m.title || "")}</h3>${pill}
+    ${m.url ? `<a class="note" href="${esc(m.url)}" target="_blank" rel="noopener">posting ↗</a>` : ""}</div>`;
+  if (m.state === "error") h += `<p class="warn">${esc(m.error)}</p>`;
+  else if (busy) h += `<p class="note">Reading the posting, rewriting your resume, then compiling it with pdflatex to check it builds and stays the same length. This usually takes about a minute.</p>`;
+  else {
+    if (!m.compiled && m.base_compiles === false) h += `<p class="warn">Couldn't check that it compiles: your base resume doesn't build on this Mac either (probably a LaTeX package that isn't installed locally). It should build wherever your original does, e.g. Overleaf.<br><code>${esc(m.base_log)}</code></p>`;
+    else if (!m.compiled) h += `<p class="warn">pdflatex reported errors after ${m.fix_rounds} fix attempt(s):<br><code>${esc(m.compile_log)}</code></p>`;
+    if (m.base_pages && m.pages > m.base_pages) h += `<p class="warn">It's ${m.pages} pages; your base resume is ${m.base_pages}.</p>`;
+    const pdf = m.compiled && m.pages ? `/tailored/${esc(m.id)}/resume.pdf?v=${Math.round(m.finished || 0)}` : null;
+    const name = `${(m.company || "resume").replace(/[^A-Za-z0-9]+/g, "_")}_resume.pdf`;
+    h += `<div class="toolbar">${pdf ? `<a href="${pdf}" download="${esc(name)}"><button class="primary">Download PDF</button></a>
+      <a href="${pdf}" target="_blank"><button>Open in new tab</button></a>` : ""}
+      ${m.key ? `<span class="spacer"></span><button class="small" id="retailor">Tailor again</button>` : ""}</div>
+      ${pdf ? `<iframe class="pdf" src="${pdf}#toolbar=0&view=FitH" title="Tailored resume"></iframe>` : ""}
+      ${m.font_fallback ? `<p class="note">Preview uses Latin Modern because this Mac's TeX install is missing a font (run <code>tlmgr install cm-super</code> for the exact original font). The LaTeX is unchanged.</p>` : ""}
+      <div class="rcols"><div><h4>What they screen for</h4>${list(m.analysis)}</div><div><h4>What changed</h4>${list(m.changes)}</div>
+      <div><h4>Gaps to address</h4>${list(m.gaps)}</div></div>
+      <details ${pdf ? "" : "open"}><summary class="note" style="cursor:pointer">LaTeX source</summary>
+        <div class="toolbar" style="margin-top:8px"><button class="small" id="copytex">Copy LaTeX</button>
+        <a href="/tailored/${esc(m.id)}/resume.tex" download="${esc(name.replace(/\.pdf$/, ".tex"))}"><button class="small">Download .tex</button></a></div>
+        <pre class="tex" id="textout"></pre></details>`;
+  }
+  $("tresult").innerHTML = h;
+  if ($("textout")) $("textout").textContent = m.latex;
+  if ($("copytex")) $("copytex").onclick = async () => { try { await navigator.clipboard.writeText(m.latex); toast("LaTeX copied"); } catch (e) { toast("Copy failed; select the text instead"); } };
+  if ($("retailor")) $("retailor").onclick = () => startTailor({key: m.key});
+  if (busy) pollH = setTimeout(() => showTailor(id), 2000); else loadResume();
+}
+$("hist").addEventListener("click", (e) => { const d = e.target.closest("[data-id]"); if (d) showTailor(d.dataset.id); });
+
+// ------------------------------------------------------------------ settings
+const ROLES = {swe: "Software", ml: "ML / AI", data: "Data", quant: "Quant"};
+function checks(el, opts, chosen) {
+  $(el).innerHTML = Object.entries(opts).map(([k, v]) => `<label class="chk"><input type="checkbox" value="${k}" ${chosen.includes(k) ? "checked" : ""}> ${v}</label>`).join("");
+}
+function fillSettings(c) {
+  checks("s_roles", ROLES, c.search.roles); checks("s_cities", CITY, c.search.cities);
+  for (const k of ["include_remote", "keep_unknown_location"]) $("s_" + k).checked = !!c.search[k];
+  $("s_min_hourly").value = c.search.min_hourly; $("s_other_companies").value = c.search.other_companies;
+  for (const k of ["fast_minutes", "slow_minutes", "lists_minutes"]) $("s_" + k).value = c.poll[k];
+  $("s_macos").checked = !!c.notify.macos; $("s_ntfy_topic").value = c.notify.ntfy_topic || "";
+}
+const picked = (el) => [...$(el).querySelectorAll("input:checked")].map((i) => i.value);
+$("save").onclick = async () => {
+  try {
+    await api("/api/settings", {
+      search: {roles: picked("s_roles"), cities: picked("s_cities"), include_remote: $("s_include_remote").checked,
+               keep_unknown_location: $("s_keep_unknown_location").checked, min_hourly: +$("s_min_hourly").value,
+               other_companies: $("s_other_companies").value},
+      poll: {fast_minutes: +$("s_fast_minutes").value, slow_minutes: +$("s_slow_minutes").value, lists_minutes: +$("s_lists_minutes").value},
+      notify: {macos: $("s_macos").checked, ntfy_topic: $("s_ntfy_topic").value.trim()}});
+    toast("Saved. Re-applying filters…"); setTimeout(loadJobs, 5000);
+  } catch (e) { toast("Couldn't save: " + e.message); }
+};
+try { $("browsernotif").checked = localStorage.getItem("radar-notif") === "1"; } catch (e) {}
+$("browsernotif").onchange = async () => {
+  if ($("browsernotif").checked && "Notification" in window) await Notification.requestPermission();
+  try { localStorage.setItem("radar-notif", $("browsernotif").checked ? "1" : "0"); } catch (e) {}
+};
+
+// ------------------------------------------------------------------ boot
+loadState(); loadJobs(); loadBiz();
+setInterval(loadState, 4000); setInterval(loadJobs, 45000); setInterval(loadBiz, 120000);
+</script>
+</body>
+</html>
