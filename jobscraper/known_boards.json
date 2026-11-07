@@ -1,0 +1,337 @@
+[
+ {
+  "ats": "greenhouse",
+  "slug": "okta",
+  "company": "Okta"
+ },
+ {
+  "ats": "greenhouse",
+  "slug": "twitch",
+  "company": "Twitch"
+ },
+ {
+  "ats": "greenhouse",
+  "slug": "roku",
+  "company": "Roku"
+ },
+ {
+  "ats": "greenhouse",
+  "slug": "epicgames",
+  "company": "Epic Games"
+ },
+ {
+  "ats": "greenhouse",
+  "slug": "elastic",
+  "company": "Elastic"
+ },
+ {
+  "ats": "greenhouse",
+  "slug": "gitlab",
+  "company": "GitLab"
+ },
+ {
+  "ats": "greenhouse",
+  "slug": "toast",
+  "company": "Toast"
+ },
+ {
+  "ats": "greenhouse",
+  "slug": "sofi",
+  "company": "SoFi"
+ },
+ {
+  "ats": "greenhouse",
+  "slug": "asana",
+  "company": "Asana"
+ },
+ {
+  "ats": "greenhouse",
+  "slug": "airtable",
+  "company": "Airtable"
+ },
+ {
+  "ats": "ashby",
+  "slug": "quora",
+  "company": "Quora"
+ },
+ {
+  "ats": "greenhouse",
+  "slug": "nextdoor",
+  "company": "Nextdoor"
+ },
+ {
+  "ats": "greenhouse",
+  "slug": "squarespace",
+  "company": "Squarespace"
+ },
+ {
+  "ats": "greenhouse",
+  "slug": "peloton",
+  "company": "Peloton"
+ },
+ {
+  "ats": "greenhouse",
+  "slug": "motional",
+  "company": "Motional"
+ },
+ {
+  "ats": "greenhouse",
+  "slug": "flexport",
+  "company": "Flexport"
+ },
+ {
+  "ats": "lever",
+  "slug": "gopuff",
+  "company": "Gopuff"
+ },
+ {
+  "ats": "greenhouse",
+  "slug": "quberesearchandtechnologies",
+  "company": "Qube Research & Technologies"
+ },
+ {
+  "ats": "lever",
+  "slug": "valkyrietrading",
+  "company": "Valkyrie Trading"
+ },
+ {
+  "ats": "greenhouse",
+  "slug": "gravitonresearchcapital",
+  "company": "Graviton Research Capital"
+ },
+ {
+  "ats": "greenhouse",
+  "slug": "worldquant",
+  "company": "WorldQuant"
+ },
+ {
+  "ats": "greenhouse",
+  "slug": "jumpcrypto",
+  "company": "Jump Crypto"
+ },
+ {
+  "ats": "ashby",
+  "slug": "cognition",
+  "company": "Cognition"
+ },
+ {
+  "ats": "ashby",
+  "slug": "writer",
+  "company": "Writer"
+ },
+ {
+  "ats": "ashby",
+  "slug": "pinecone",
+  "company": "Pinecone"
+ },
+ {
+  "ats": "greenhouse",
+  "slug": "coreweave",
+  "company": "CoreWeave"
+ },
+ {
+  "ats": "greenhouse",
+  "slug": "figureai",
+  "company": "Figure AI"
+ },
+ {
+  "ats": "ashby",
+  "slug": "runway",
+  "company": "Runway"
+ },
+ {
+  "ats": "ashby",
+  "slug": "elevenlabs",
+  "company": "ElevenLabs"
+ },
+ {
+  "ats": "greenhouse",
+  "slug": "stabilityai",
+  "company": "Stability AI"
+ },
+ {
+  "ats": "greenhouse",
+  "slug": "netlify",
+  "company": "Netlify"
+ },
+ {
+  "ats": "ashby",
+  "slug": "supabase",
+  "company": "Supabase"
+ },
+ {
+  "ats": "greenhouse",
+  "slug": "cockroachlabs",
+  "company": "Cockroach Labs"
+ },
+ {
+  "ats": "ashby",
+  "slug": "temporal",
+  "company": "Temporal"
+ },
+ {
+  "ats": "ashby",
+  "slug": "linear",
+  "company": "Linear"
+ },
+ {
+  "ats": "ashby",
+  "slug": "miro",
+  "company": "Miro"
+ },
+ {
+  "ats": "ashby",
+  "slug": "clickup",
+  "company": "ClickUp"
+ },
+ {
+  "ats": "greenhouse",
+  "slug": "fivetran",
+  "company": "Fivetran"
+ },
+ {
+  "ats": "ashby",
+  "slug": "clickhouse",
+  "company": "ClickHouse"
+ },
+ {
+  "ats": "ashby",
+  "slug": "redis",
+  "company": "Redis"
+ },
+ {
+  "ats": "greenhouse",
+  "slug": "wizinc",
+  "company": "Wiz"
+ },
+ {
+  "ats": "greenhouse",
+  "slug": "abnormalsecurity",
+  "company": "Abnormal Security"
+ },
+ {
+  "ats": "ashby",
+  "slug": "vanta",
+  "company": "Vanta"
+ },
+ {
+  "ats": "ashby",
+  "slug": "drata",
+  "company": "Drata"
+ },
+ {
+  "ats": "greenhouse",
+  "slug": "rubrik",
+  "company": "Rubrik"
+ },
+ {
+  "ats": "greenhouse",
+  "slug": "netskope",
+  "company": "Netskope"
+ },
+ {
+  "ats": "ashby",
+  "slug": "flock",
+  "company": "Flock Safety"
+ },
+ {
+  "ats": "greenhouse",
+  "slug": "relativity",
+  "company": "Relativity Space"
+ },
+ {
+  "ats": "greenhouse",
+  "slug": "flatironhealth",
+  "company": "Flatiron Health"
+ },
+ {
+  "ats": "greenhouse",
+  "slug": "oscar",
+  "company": "Oscar Health"
+ },
+ {
+  "ats": "greenhouse",
+  "slug": "lattice",
+  "company": "Lattice"
+ },
+ {
+  "ats": "greenhouse",
+  "slug": "braze",
+  "company": "Braze"
+ },
+ {
+  "ats": "ashby",
+  "slug": "amplitude",
+  "company": "Amplitude"
+ },
+ {
+  "ats": "lever",
+  "slug": "wealthfront",
+  "company": "Wealthfront"
+ },
+ {
+  "ats": "greenhouse",
+  "slug": "carta",
+  "company": "Carta"
+ },
+ {
+  "ats": "ashby",
+  "slug": "moderntreasury",
+  "company": "Modern Treasury"
+ },
+ {
+  "ats": "greenhouse",
+  "slug": "ripple",
+  "company": "Ripple"
+ },
+ {
+  "ats": "greenhouse",
+  "slug": "fireblocks",
+  "company": "Fireblocks"
+ },
+ {
+  "ats": "ashby",
+  "slug": "alchemy",
+  "company": "Alchemy"
+ },
+ {
+  "ats": "greenhouse",
+  "slug": "webflow",
+  "company": "Webflow"
+ },
+ {
+  "ats": "ashby",
+  "slug": "hex",
+  "company": "Hex"
+ },
+ {
+  "ats": "ashby",
+  "slug": "watershed",
+  "company": "Watershed"
+ },
+ {
+  "ats": "lever",
+  "slug": "waabi",
+  "company": "Waabi"
+ },
+ {
+  "ats": "ashby",
+  "slug": "wayve",
+  "company": "Wayve"
+ },
+ {
+  "ats": "ashby",
+  "slug": "nubank",
+  "company": "Nubank"
+ },
+ {
+  "ats": "greenhouse",
+  "slug": "nintendo",
+  "company": "Nintendo"
+ },
+ {
+  "ats": "ashby",
+  "slug": "niantic-spatial",
+  "company": "Niantic"
+ }
+]
