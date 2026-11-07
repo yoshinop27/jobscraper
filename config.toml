@@ -1,0 +1,36 @@
+# Job scraper settings. Edit freely; every run re-reads this file.
+
+[search]
+season = "Summer 2027"
+# Role families to keep (see jobscraper/filters.py for the keyword lists).
+roles = ["swe", "ml", "data", "quant"]
+cities = ["nyc", "sf", "chicago", "austin", "seattle", "boston"]
+include_remote = true          # US-remote internships
+keep_unknown_location = true   # keep postings whose location couldn't be parsed
+min_hourly = 40                # $/hr; postings with a known max pay below this are dropped
+# Companies outside the FAANG+/quant/unicorn tiers are shown only when posted pay >= min_hourly.
+other_companies = "if_pay_known"   # "if_pay_known" | "all" | "none"
+
+[poll]
+fast_minutes = 3      # tiered companies (FAANG+, quant, unicorn, high-pay)
+slow_minutes = 10     # every other company board
+lists_minutes = 10    # Simplify / GitHub lists
+workers = 64          # boards fetched in parallel (one thread per board)
+quiet_first_run = true   # don't notify for jobs already open on the very first poll
+
+[notify]
+macos = true
+# Phone push via https://ntfy.sh (free, no account): pick a long random topic and subscribe in the ntfy app.
+# Only company, title, location and link are sent.
+ntfy_topic = ""
+
+[pay_estimates]
+# Your own intern pay figures ($/hr) override the built-in reputation estimates in jobscraper/pay.py, e.g.
+# "Jane Street" = 120
+
+[tiers]
+# Extra company names to force into a tier (matched case-insensitively, ignoring punctuation).
+faang = []
+quant = []
+unicorn = []
+highpay = []
