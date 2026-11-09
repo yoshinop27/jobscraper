@@ -304,6 +304,9 @@ const ago = (t) => { if (!t) return "never"; const s = Math.max(0, now() - t);
 const dur = (s) => s < 3600 ? Math.max(1, Math.round(s / 60)) + "m" : s < 86400 ? (s / 3600).toFixed(1) + "h" : (s / 86400).toFixed(1) + "d";
 const toast = (m) => { const t = $("toast"); t.textContent = m; t.classList.add("show"); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove("show"), 2400); };
 const debounce = (fn, ms) => { let h; return (...a) => { clearTimeout(h); h = setTimeout(() => fn(...a), ms); }; };
+// The applied/hidden checkboxes narrow the list to those statuses (either one, if both are ticked); with neither
+// ticked, only new postings show.
+const statusMatch = (s, applied, hidden) => applied || hidden ? (applied && s === "applied") || (hidden && s === "hidden") : s === "new";
 async function api(path, body) {
   const r = await fetch(path, body === undefined ? {} : {method: "POST", body: JSON.stringify(body)});
   const d = await r.json().catch(() => ({})); if (!r.ok) throw new Error(d.error || r.status); return d;
@@ -363,12 +366,12 @@ document.querySelector(".cards").addEventListener("click", (e) => {
   resetFilters(false);
   if (k.dataset.since) $("since").value = k.dataset.since;
   if (k.dataset.paylisted) $("paylisted").checked = true;
-  if (k.dataset.applied) { $("showapplied").checked = true; onlyApplied = true; }
+  if (k.dataset.applied) $("showapplied").checked = true;
   document.querySelector('nav button[data-tab="jobs"]').click(); renderJobs();
 });
 
 // ------------------------------------------------------------------ jobs
-let jobs = [], knownKeys = null, tierFilter = "", limit = 100, onlyApplied = false;
+let jobs = [], knownKeys = null, tierFilter = "", limit = 100;
 async function loadJobs() {
   try { jobs = (await api("/api/jobs")).jobs; } catch (e) { return; }
   const keys = new Set(jobs.map((j) => j.key));
@@ -401,8 +404,7 @@ function filtered() {
     (!city || (city === "remote" ? j.remote : (j.cities || "").split(",").includes(city))) &&
     (!since || (j.posted_at && now() - j.posted_at <= since)) && (!minpay || payAny(j) >= minpay) &&
     (!$("paylisted").checked || j.pay_lo) && ($("showclosed").checked || !j.closed_at) &&
-    (onlyApplied ? j.status === "applied" : (j.status === "new" || (j.status === "applied" && $("showapplied").checked) ||
-      (j.status === "hidden" && $("showhidden").checked))));
+    statusMatch(j.status, $("showapplied").checked, $("showhidden").checked));
 }
 function rowHTML(j) {
   const loc = j.cities ? j.cities.split(",").map((c) => CITY[c] || c).join(", ") : j.remote ? "Remote" : esc((j.locations || []).join("; ").slice(0, 50)) || "Location unclear";
@@ -458,13 +460,13 @@ $("tierchips").addEventListener("click", (e) => {
   tierFilter = b.dataset.tier; document.querySelectorAll("#tierchips button").forEach((x) => x.classList.toggle("on", x === b));
   limit = 100; renderJobs();
 });
-const rerender = () => { limit = 100; onlyApplied = false; renderJobs(); };
+const rerender = () => { limit = 100; renderJobs(); };
 $("q").addEventListener("input", debounce(rerender, 150));
 for (const id of ["sort", "role", "city", "since", "minpay", "paylisted", "showapplied", "showhidden", "showclosed"]) $(id).addEventListener("input", rerender);
 function resetFilters(render = true) {
   $("q").value = ""; for (const id of ["role", "city"]) $(id).value = ""; $("since").value = "0"; $("minpay").value = "0"; $("sort").value = "posted";
   for (const id of ["paylisted", "showapplied", "showhidden", "showclosed"]) $(id).checked = false;
-  tierFilter = ""; onlyApplied = false; limit = 100;
+  tierFilter = ""; limit = 100;
   document.querySelectorAll("#tierchips button").forEach((x) => x.classList.toggle("on", x.dataset.tier === ""));
   if (render) renderJobs();
 }
@@ -481,7 +483,7 @@ function bizFiltered() {
     (!q || (j.company + " " + j.title).toLowerCase().includes(q)) && (!role || j.roles.split(",").includes(role)) &&
     (city ? j.cities.split(",").includes(city) : (j.cities || $("bremote").checked)) &&
     ($("bease").value === "all" || !j.competitive) &&
-    (j.status === "new" || (j.status === "applied" && $("bapplied").checked) || (j.status === "hidden" && $("bhidden").checked)));
+    statusMatch(j.status, $("bapplied").checked, $("bhidden").checked));
 }
 function bizRowHTML(j) {
   const loc = j.cities ? j.cities.split(",").map((c) => BIZCITY[c] || c).join(", ") : "Remote";
