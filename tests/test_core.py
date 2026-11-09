@@ -240,3 +240,25 @@ def test_slow_lane_full_listing_respects_broken_board_backoff(tmp_path, monkeypa
     con.execute("UPDATE boards SET last_poll = ?", (db.now() - 7 * 3600,))
     poller.poll_boards(CFG, con, lane="slow", log=lambda *a: None)
     assert calls == ["fakewd:intel"]                                           # retry window passed
+
+
+def test_failed_pass_rolls_back(tmp_path, monkeypatch):
+    """A pass that dies mid-transaction must not leave the lane's connection holding the database."""
+    from jobscraper import worker
+    con = db.connect(tmp_path / "t.db")
+
+    def dies_mid_write(lane, cfg, c, st, force, now):
+        c.execute("INSERT INTO meta(k, v) VALUES('x', '1')")
+        raise RuntimeError("boom")
+
+    monkeypatch.setattr(worker, "_one_pass", dies_mid_write)
+    monkeypatch.setattr(worker, "log_line", lambda *a: None)
+    monkeypatch.setattr(worker, "load_config", lambda: CFG)
+    st = type("St", (), {"set": lambda self, **kw: None})()
+    worker._safe_pass("fast", con, st, False, False)
+
+    assert not con.in_transaction
+    other = db.connect(tmp_path / "t.db")
+    other.execute("PRAGMA busy_timeout=100")
+    other.execute("INSERT INTO meta(k, v) VALUES('y', '2')")  # would raise "database is locked" without the rollback
+    other.commit()

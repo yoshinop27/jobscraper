@@ -130,6 +130,9 @@ def _safe_pass(lane: str, con, st: Status, force: bool, now: bool) -> None:
     try:
         _one_pass(lane, cfg, con, st, force, now)
     except Exception as e:  # noqa: BLE001
+        # Without a rollback the connection stays inside the failed transaction, pinned to an old snapshot:
+        # every later write then fails with "database is locked" and the WAL file can never be checkpointed.
+        con.rollback()
         log_line(lane, f"error: {e}")
         traceback.print_exc()
         st.set(state="idle", last_result=f"error: {e}")
